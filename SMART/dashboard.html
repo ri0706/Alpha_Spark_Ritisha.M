@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - SmartBill</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header>
+        <nav class="container">
+            <div class="logo">💊 SmartBill</div>
+            <ul class="nav-links">
+                <li><a href="index.html">Home</a></li>
+                <li><a href="price-checker.html">Price Checker</a></li>
+                <li><a href="verify-bill.html">Verify Bill</a></li>
+                <li><a href="dashboard.html">Dashboard</a></li>
+                <li><a href="complaints.html">Complaints</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main class="container" style="padding: 2rem 0;">
+        <h1>Verified Bills Dashboard</h1>
+
+        <div class="grid" id="statsCards">
+            <div class="card">
+                <h3>Total Bills</h3>
+                <p style="font-size: 2rem; font-weight: 700; color: var(--primary);" id="totalBills">0</p>
+            </div>
+            <div class="card">
+                <h3>Overcharged Bills</h3>
+                <p style="font-size: 2rem; font-weight: 700; color: var(--danger);" id="overchargedBills">0</p>
+            </div>
+            <div class="card">
+                <h3>Valid Bills</h3>
+                <p style="font-size: 2rem; font-weight: 700; color: var(--success);" id="validBills">0</p>
+            </div>
+            <div class="card">
+                <h3>Total Complaints</h3>
+                <p style="font-size: 2rem; font-weight: 700; color: var(--warning);" id="totalComplaints">0</p>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Recent Bills</h2>
+            <div id="billsList"></div>
+        </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="config/supabase.js"></script>
+    <script src="js/app.js"></script>
+    <script>
+        async function loadDashboard() {
+            const billsList = document.getElementById('billsList');
+            billsList.innerHTML = '<div class="loading">Loading bills...</div>';
+
+            try {
+                const { data: bills, error } = await API.getBills();
+                const { data: stats } = await API.getStats();
+
+                if (error) throw error;
+
+                // Update stats
+                if (stats) {
+                    document.getElementById('totalBills').textContent = stats.total_bills;
+                    document.getElementById('overchargedBills').textContent = stats.overcharged_bills;
+                    document.getElementById('validBills').textContent = stats.valid_bills;
+                    document.getElementById('totalComplaints').textContent = stats.total_complaints;
+                }
+
+                if (!bills || bills.length === 0) {
+                    billsList.innerHTML = '<p style="color: var(--text-light);">No bills verified yet</p>';
+                    return;
+                }
+
+                // Display bills table
+                let html = `
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Patient</th>
+                                <th>Hospital</th>
+                                <th>Amount</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                `;
+
+                bills.forEach(bill => {
+                    html += `
+                        <tr>
+                            <td>${new Date(bill.bill_date).toLocaleDateString()}</td>
+                            <td>${bill.patient_name}</td>
+                            <td>${bill.hospital_name}</td>
+                            <td>${Utils.formatCurrency(bill.total_amount)}</td>
+                            <td>
+                                <span class="badge ${bill.overcharged ? 'badge-danger' : 'badge-success'}">
+                                    ${bill.overcharged ? 'Overcharged' : 'Valid'}
+                                </span>
+                            </td>
+                        </tr>
+                    `;
+                });
+
+                html += '</tbody></table>';
+                billsList.innerHTML = html;
+
+            } catch (error) {
+                billsList.innerHTML = `<div class="alert alert-danger">Error loading bills: ${error.message}</div>`;
+            }
+        }
+
+        loadDashboard();
+    </script>
+</body>
+</html>

@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Price Checker - SmartBill</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header>
+        <nav class="container">
+            <div class="logo">💊 SmartBill</div>
+            <ul class="nav-links">
+                <li><a href="index.html">Home</a></li>
+                <li><a href="price-checker.html">Price Checker</a></li>
+                <li><a href="verify-bill.html">Verify Bill</a></li>
+                <li><a href="dashboard.html">Dashboard</a></li>
+                <li><a href="complaints.html">Complaints</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main class="container" style="padding: 2rem 0;">
+        <div class="card">
+            <h2>Check Medicine or Procedure Price</h2>
+            <form id="priceCheckForm">
+                <div class="form-group">
+                    <label for="itemType">Type</label>
+                    <select id="itemType" required>
+                        <option value="">Select Type</option>
+                        <option value="medicine">Medicine</option>
+                        <option value="procedure">Medical Procedure</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="itemName">Item Name</label>
+                    <input type="text" id="itemName" placeholder="e.g., Paracetamol 500mg" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="chargedPrice">Charged Price (₹)</label>
+                    <input type="number" id="chargedPrice" step="0.01" placeholder="e.g., 5.00" required>
+                </div>
+
+                <button type="submit" class="btn btn-primary">Check Price</button>
+            </form>
+        </div>
+
+        <div id="results"></div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="config/supabase.js"></script>
+    <script src="js/app.js"></script>
+    <script>
+        const form = document.getElementById('priceCheckForm');
+        const resultsDiv = document.getElementById('results');
+        const checker = new PriceChecker();
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const itemType = document.getElementById('itemType').value;
+            const itemName = document.getElementById('itemName').value;
+            const chargedPrice = parseFloat(document.getElementById('chargedPrice').value);
+
+            resultsDiv.innerHTML = '<div class="loading">Checking price...</div>';
+
+            try {
+                const result = await checker.checkPrice(itemName, itemType, chargedPrice, true);
+                checker.displayResult(result, resultsDiv);
+                if (result.found) {
+                    Utils.showAlert('Price check saved to dashboard!', 'success');
+                }
+            } catch (error) {
+                resultsDiv.innerHTML = `<div class="alert alert-danger">Error: ${error.message}</div>`;
+            }
+        });
+    </script>
+</body>
+</html>

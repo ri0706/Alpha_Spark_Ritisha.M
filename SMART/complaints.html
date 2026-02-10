@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File Complaint - SmartBill</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header>
+        <nav class="container">
+            <div class="logo">💊 SmartBill</div>
+            <ul class="nav-links">
+                <li><a href="index.html">Home</a></li>
+                <li><a href="price-checker.html">Price Checker</a></li>
+                <li><a href="verify-bill.html">Verify Bill</a></li>
+                <li><a href="dashboard.html">Dashboard</a></li>
+                <li><a href="complaints.html">Complaints</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main class="container" style="padding: 2rem 0;">
+        <div class="card">
+            <h2>🚨 File Complaint Against Hospital</h2>
+            <p style="color: var(--text-light); margin-bottom: 2rem;">
+                Report overcharging to government authorities. Your complaint will be reviewed and action will be taken.
+            </p>
+
+            <form id="complaintForm">
+                <div class="form-group">
+                    <label for="billId">Bill ID (Optional)</label>
+                    <input type="number" id="billId" placeholder="Enter bill ID if you have verified bill">
+                </div>
+
+                <div class="form-group">
+                    <label for="patientName">Your Name *</label>
+                    <input type="text" id="patientName" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="patientEmail">Email *</label>
+                    <input type="email" id="patientEmail" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="patientPhone">Phone Number *</label>
+                    <input type="tel" id="patientPhone" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="hospitalName">Hospital Name *</label>
+                    <input type="text" id="hospitalName" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="overchargeAmount">Total Overcharge Amount (₹) *</label>
+                    <input type="number" id="overchargeAmount" step="0.01" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="complaintDetails">Complaint Details *</label>
+                    <textarea id="complaintDetails" rows="6" 
+                              placeholder="Describe the overcharging incident. Include item names, charged prices, and government approved prices." 
+                              required></textarea>
+                </div>
+
+                <button type="submit" class="btn btn-danger">Submit Complaint</button>
+            </form>
+        </div>
+
+        <div id="result"></div>
+
+        <div class="card">
+            <h3>📋 Recent Complaints</h3>
+            <div id="complaintsList"></div>
+        </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="config/supabase.js"></script>
+    <script src="js/app.js"></script>
+    <script>
+        // Load complaints on page load
+        loadComplaints();
+
+        document.getElementById('complaintForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const billIdValue = document.getElementById('billId').value;
+            const complaintData = {
+                bill_id: billIdValue ? parseInt(billIdValue) : null,
+                patient_name: document.getElementById('patientName').value,
+                patient_email: document.getElementById('patientEmail').value,
+                patient_phone: document.getElementById('patientPhone').value,
+                hospital_name: document.getElementById('hospitalName').value,
+                overcharge_amount: parseFloat(document.getElementById('overchargeAmount').value),
+                complaint_details: document.getElementById('complaintDetails').value,
+                status: 'Pending'
+            };
+
+            try {
+                const { data, error } = await API.saveComplaint(complaintData);
+
+                if (error) throw error;
+
+                document.getElementById('result').innerHTML = `
+                    <div class="alert alert-success">
+                        <strong>✅ Complaint Filed Successfully!</strong><br>
+                        Complaint ID: ${data[0].id}<br>
+                        Government authorities will review your complaint within 7 working days.
+                    </div>
+                `;
+                document.getElementById('complaintForm').reset();
+                loadComplaints();
+            } catch (error) {
+                document.getElementById('result').innerHTML = `
+                    <div class="alert alert-danger">Error: ${error.message}</div>
+                `;
+            }
+        });
+
+        async function loadComplaints() {
+            const listDiv = document.getElementById('complaintsList');
+            listDiv.innerHTML = '<div class="loading">Loading complaints...</div>';
+
+            try {
+                const { data: complaints, error } = await API.getComplaints();
+
+                if (error) throw error;
+
+                if (!complaints || complaints.length === 0) {
+                    listDiv.innerHTML = '<p style="color: var(--text-light);">No complaints filed yet</p>';
+                    return;
+                }
+
+                let html = '<table><thead><tr><th>ID</th><th>Hospital</th><th>Patient</th><th>Overcharge</th><th>Status</th><th>Date</th></tr></thead><tbody>';
+
+                complaints.forEach(complaint => {
+                    const statusClass = complaint.status === 'Pending' ? 'badge-warning' : 
+                                       complaint.status === 'Resolved' ? 'badge-success' : 'badge-danger';
+                    
+                    html += `
+                        <tr>
+                            <td>#${complaint.id}</td>
+                            <td>${complaint.hospital_name}</td>
+                            <td>${complaint.patient_name}</td>
+                            <td>₹${parseFloat(complaint.overcharge_amount).toFixed(2)}</td>
+                            <td><span class="badge ${statusClass}">${complaint.status}</span></td>
+                            <td>${new Date(complaint.created_at).toLocaleDateString()}</td>
+                        </tr>
+                    `;
+                });
+
+                html += '</tbody></table>';
+                listDiv.innerHTML = html;
+            } catch (error) {
+                listDiv.innerHTML = `<div class="alert alert-danger">Error loading complaints: ${error.message}</div>`;
+            }
+        }
+    </script>
+</body>
+</html>

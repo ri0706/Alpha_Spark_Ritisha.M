@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Healthcare Billing - Transparent Pricing</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header>
+        <nav class="container">
+            <div class="logo">💊 SmartBill</div>
+            <ul class="nav-links">
+                <li><a href="index.html">Home</a></li>
+                <li><a href="price-checker.html">Price Checker</a></li>
+                <li><a href="verify-bill.html">Verify Bill</a></li>
+                <li><a href="dashboard.html">Dashboard</a></li>
+                <li><a href="complaints.html">Complaints</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <section class="hero">
+            <div class="container">
+                <h1>Transparent Healthcare Pricing</h1>
+                <p>Verify medical bills against government-approved price limits</p>
+            </div>
+        </section>
+
+        <section class="container">
+            <div class="grid">
+                <div class="card">
+                    <h2>🔍 Price Checker</h2>
+                    <p>Check if medicine or procedure prices are within government-approved limits</p>
+                    <a href="price-checker.html"><button class="btn btn-primary">Check Prices</button></a>
+                </div>
+
+                <div class="card">
+                    <h2>✅ Bill Verification</h2>
+                    <p>Upload your medical bill and verify all charges against official price limits</p>
+                    <a href="verify-bill.html"><button class="btn btn-primary">Verify Bill</button></a>
+                </div>
+
+                <div class="card">
+                    <h2>📊 Dashboard</h2>
+                    <p>View verified bills and track overcharging patterns across hospitals</p>
+                    <a href="dashboard.html"><button class="btn btn-primary">View Dashboard</button></a>
+                </div>
+
+                <div class="card">
+                    <h2>🚨 File Complaint</h2>
+                    <p>Report overcharging hospitals to government authorities</p>
+                    <a href="complaints.html"><button class="btn btn-danger">File Complaint</button></a>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>Why SmartBill?</h2>
+                <ul style="list-style-position: inside; color: var(--text-light);">
+                    <li>✓ Compare hospital charges with government-approved price limits</li>
+                    <li>✓ Identify overcharging instantly</li>
+                    <li>✓ Build trust through transparent pricing</li>
+                    <li>✓ Make informed healthcare decisions</li>
+                    <li>✓ Protect yourself from financial stress</li>
+                </ul>
+            </div>
+        </section>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="config/supabase.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verify Bill - SmartBill</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header>
+        <nav class="container">
+            <div class="logo">💊 SmartBill</div>
+            <ul class="nav-links">
+                <li><a href="index.html">Home</a></li>
+                <li><a href="price-checker.html">Price Checker</a></li>
+                <li><a href="verify-bill.html">Verify Bill</a></li>
+                <li><a href="dashboard.html">Dashboard</a></li>
+                <li><a href="complaints.html">Complaints</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main class="container" style="padding: 2rem 0;">
+        <div class="card">
+            <h2>Verify Medical Bill</h2>
+            <form id="billInfoForm">
+                <div class="form-group">
+                    <label for="patientName">Patient Name</label>
+                    <input type="text" id="patientName" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="hospitalName">Hospital Name</label>
+                    <input type="text" id="hospitalName" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="billDate">Bill Date</label>
+                    <input type="date" id="billDate" required>
+                </div>
+            </form>
+        </div>
+
+        <div class="card">
+            <h3>Add Bill Items</h3>
+            <form id="addItemForm">
+                <div class="form-group">
+                    <label for="itemType">Type</label>
+                    <select id="itemType" required>
+                        <option value="">Select Type</option>
+                        <option value="medicine">Medicine</option>
+                        <option value="procedure">Medical Procedure</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="itemName">Item Name</label>
+                    <input type="text" id="itemName" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="itemPrice">Charged Price (₹)</label>
+                    <input type="number" id="itemPrice" step="0.01" required>
+                </div>
+
+                <button type="submit" class="btn btn-success">Add Item</button>
+            </form>
+
+            <div id="itemsList" style="margin-top: 2rem;"></div>
+
+            <button id="verifyBtn" class="btn btn-primary" style="margin-top: 1rem; display: none;">
+                Verify Bill
+            </button>
+        </div>
+
+        <div id="results"></div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="config/supabase.js"></script>
+    <script src="js/app.js"></script>
+    <script>
+        const verifier = new BillVerifier();
+        const addItemForm = document.getElementById('addItemForm');
+        const itemsList = document.getElementById('itemsList');
+        const verifyBtn = document.getElementById('verifyBtn');
+        const resultsDiv = document.getElementById('results');
+
+        function updateItemsList() {
+            if (verifier.billItems.length === 0) {
+                itemsList.innerHTML = '<p style="color: var(--text-light);">No items added yet</p>';
+                verifyBtn.style.display = 'none';
+                return;
+            }
+
+            let html = '<table><thead><tr><th>Type</th><th>Name</th><th>Price</th><th>Action</th></tr></thead><tbody>';
+            
+            verifier.billItems.forEach((item, index) => {
+                html += `
+                    <tr>
+                        <td>${item.type}</td>
+                        <td>${item.name}</td>
+                        <td>${Utils.formatCurrency(item.price)}</td>
+                        <td><button class="btn btn-danger" onclick="removeItem(${index})">Remove</button></td>
+                    </tr>
+                `;
+            });
+
+            html += '</tbody></table>';
+            itemsList.innerHTML = html;
+            verifyBtn.style.display = 'block';
+        }
+
+        window.removeItem = function(index) {
+            verifier.billItems.splice(index, 1);
+            updateItemsList();
+        };
+
+        addItemForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            const item = {
+                type: document.getElementById('itemType').value,
+                name: document.getElementById('itemName').value,
+                price: parseFloat(document.getElementById('itemPrice').value)
+            };
+
+            verifier.addItem(item);
+            updateItemsList();
+            addItemForm.reset();
+        });
+
+        verifyBtn.addEventListener('click', async () => {
+            const patientName = document.getElementById('patientName').value;
+            const hospitalName = document.getElementById('hospitalName').value;
+            const billDate = document.getElementById('billDate').value;
+
+            if (!patientName || !hospitalName || !billDate) {
+                Utils.showAlert('Please fill in patient information', 'danger');
+                return;
+            }
+
+            resultsDiv.innerHTML = '<div class="loading">Verifying bill...</div>';
+
+            try {
+                const result = await verifier.saveBill(patientName, hospitalName, billDate);
+                verifier.displayVerification(result.verification, resultsDiv);
+                Utils.showAlert('Bill verified and saved successfully!', 'success');
+                
+                // Reset form
+                document.getElementById('billInfoForm').reset();
+                verifier.clearItems();
+                updateItemsList();
+            } catch (error) {
+                resultsDiv.innerHTML = `<div class="alert alert-danger">Error: ${error.message}</div>`;
+            }
+        });
+
+        updateItemsList();
+    </script>
+</body>
+</html>
